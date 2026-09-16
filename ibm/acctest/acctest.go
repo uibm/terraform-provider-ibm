@@ -454,6 +454,14 @@ var (
 	IAMIdpConsumerAccountId string
 )
 
+// for Container Registry account-wide settings (plan and quotas). These tests change
+// billing-relevant settings of the targeted registry, so they only run when opted in.
+var (
+	CrPlan                  string
+	CrQuotaStorageMegabytes string
+	CrQuotaTrafficMegabytes string
+)
+
 // Projects
 var ProjectsConfigApiKey string
 
@@ -537,6 +545,16 @@ func init() {
 	IAMIdpConsumerAccountId = os.Getenv("IBM_IAM_IDP_CONSUMER_ACCOUNT_ID")
 	if IAMIdpConsumerAccountId == "" {
 		fmt.Println("[WARN] Set the environment variable IBM_IAM_IDP_CONSUMER_ACCOUNT_ID for testing ibm_iam_idp_account_setting resource, or some tests for that resource will fail if this is not set correctly")
+	}
+
+	CrPlan = os.Getenv("IBM_CR_PLAN")
+	if CrPlan == "" {
+		fmt.Println("[INFO] Set the environment variable IBM_CR_PLAN (for example 'Standard') to test the ibm_cr_plan resource, otherwise that test is skipped because it changes the pricing plan of the targeted registry")
+	}
+	CrQuotaStorageMegabytes = os.Getenv("IBM_CR_QUOTA_STORAGE_MEGABYTES")
+	CrQuotaTrafficMegabytes = os.Getenv("IBM_CR_QUOTA_TRAFFIC_MEGABYTES")
+	if CrQuotaStorageMegabytes == "" || CrQuotaTrafficMegabytes == "" {
+		fmt.Println("[INFO] Set the environment variables IBM_CR_QUOTA_STORAGE_MEGABYTES and IBM_CR_QUOTA_TRAFFIC_MEGABYTES to test the ibm_cr_quota resource, otherwise that test is skipped because it changes the quotas of the targeted registry")
 	}
 
 	ProjectsConfigApiKey = os.Getenv("IBM_PROJECTS_CONFIG_APIKEY")
