@@ -307,8 +307,8 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Optional:         true,
 				Default:          ingressReady,
 				DiffSuppressFunc: flex.ApplyOnce,
-				ValidateFunc:     validation.StringInSlice([]string{masterNodeReady, oneWorkerNodeReady, ingressReady, clusterNormal}, true),
-				Description:      "wait_till can be configured for Master Ready, One worker Ready, Ingress Ready or Normal",
+				ValidateFunc:     validation.StringInSlice(vpcClusterWaitTillValues(), true),
+				Description:      "wait_till can be configured for Master Ready, One worker Ready, Ingress Ready, Normal, or All Workers Ready",
 			},
 
 			"entitlement": {
@@ -1196,6 +1196,12 @@ func waitForVpcCluster(d *schema.ResourceData, meta interface{}, timeoutStage st
 		if err != nil {
 			return err
 		}
+
+	case strings.ToLower(allWorkersReady):
+		_, err = waitForVpcClusterAllWorkersReady(d, meta, timeout)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -1231,6 +1237,45 @@ func waitForVpcClusterDelete(d *schema.ResourceData, meta interface{}) (interfac
 	}
 
 	return deleteStateConf.WaitForState()
+}
+
+func waitForVpcClusterAllWorkersReady(d *schema.ResourceData, meta interface{}, timeout time.Duration) (interface{}, error) {
+	targetEnv, err := getVpcClusterTargetHeader(d)
+	if err != nil {
+		return nil, err
+	}
+	csClient, err := meta.(conns.ClientSession).VpcContainerAPI()
+	if err != nil {
+		return nil, err
+	}
+	clusterID := d.Id()
+	createStateConf := &resource.StateChangeConf{
+		Pending:                   []string{workerProvisionPending},
+		Target:                    []string{workerDesired},
+		Refresh:                   vpcWorkerPoolAllWorkersStateRefreshFunc(csClient.Workers(), clusterID, defaultVpcWorkerPoolName, targetEnv),
+		Timeout:                   timeout,
+		Delay:                     10 * time.Second,
+		MinTimeout:                10 * time.Second,
+		ContinuousTargetOccurence: 3,
+	}
+	return createStateConf.WaitForState()
+}
+
+func vpcWorkerPoolAllWorkersStateRefreshFunc(client v2.Workers, clusterID, workerPoolNameOrID string, target v2.ClusterTargetHeader) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+		workerFields, err := client.ListByWorkerPool(clusterID, workerPoolNameOrID, false, target)
+		if err != nil {
+			return nil, "", fmt.Errorf("[ERROR] Error retrieving workers for cluster: %s", err)
+		}
+		state, evalErr := evaluateVpcWorkerPoolReadiness(workerFields, workerPoolNameOrID, vpcWorkerReadinessOptions{
+			RequireNonEmpty: true,
+			FailOnUnhealthy: true,
+		})
+		if evalErr != nil {
+			return workerFields, "", evalErr
+		}
+		return workerFields, state, nil
+	}
 }
 
 func waitForVpcClusterOneWorkerAvailable(d *schema.ResourceData, meta interface{}, timeout time.Duration) (interface{}, error) {

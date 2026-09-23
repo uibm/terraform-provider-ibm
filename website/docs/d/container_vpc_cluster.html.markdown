@@ -25,7 +25,7 @@ Review the argument reference that you can specify for your data source.
 - `cluster_name_id` - (Deprecated, String) The name or ID of the VPC cluster that you want to retrieve.
 - `name` - (Optional, String) The name or ID of the cluster.
 - `resource_group_id` - (Optional, String) The ID of the resource group where your cluster is provisioned into. To list resource groups, run `ibmcloud resource groups` or use the `ibm_resource_group` data source.
-- `wait_till` - (Optional, String) The creation of a cluster can take a few minutes (for virtual servers) or even hours (for Bare Metal servers) to complete. There are use-cases where your cluster creation needs to reach a certain stage before it can be integrate with other Terraform components. You can specify the stage when you want Terraform to mark the cluster datasource creation as completed. Depending on what stage you choose, the cluster creation might not be fully completed and continues to run in the background. However, your Terraform code can continue to run without waiting for the cluster to be fully created. Supported stages are: <ul><li><strong>`Normal`</strong>:  Terraform marks the creation of your cluster complete when the cluster is in a [Normal](https://cloud.ibm.com/docs/containers?topic=containers-cluster-states-reference#cluster-state-normal) state. If you plan to do reading on the cluster from a datasource, use `Normal`. At the moment wait_till `Normal` also ignores the critical and warning states that occasionally happen during cluster creation, but cannot distinguish it from actual critical or warning states. </li><li><strong>`MasterNodeReady`</strong>:  Terraform marks the creation of your cluster complete when the cluster master is in a <code>ready</code> state.</li><li><strong>`OneWorkerNodeReady`</strong>:  Terraform marks the creation of your cluster complete when the master and at least one worker node are in a <code>ready</code> state.</li><li><strong>`IngressReady`</strong>:  Terraform marks the creation of your cluster complete when the cluster master and all worker nodes are in a <code>ready</code> state, and the Ingress subdomain is fully set up.</li></ul> If you do not specify this option, the provider will not wait.
+- `wait_till` - (Optional, String) The creation of a cluster can take a few minutes (for virtual servers) or even hours (for Bare Metal servers) to complete. There are use-cases where your cluster creation needs to reach a certain stage before it can be integrate with other Terraform components. You can specify the stage when you want Terraform to mark the cluster datasource creation as completed. Depending on what stage you choose, the cluster creation might not be fully completed and continues to run in the background. However, your Terraform code can continue to run without waiting for the cluster to be fully created. Supported stages are: <ul><li><strong>`Normal`</strong>:  Terraform marks the creation of your cluster complete when the cluster is in a [Normal](https://cloud.ibm.com/docs/containers?topic=containers-cluster-states-reference#cluster-state-normal) state. If you plan to do reading on the cluster from a datasource, use `Normal`. At the moment wait_till `Normal` also ignores the critical and warning states that occasionally happen during cluster creation, but cannot distinguish it from actual critical or warning states. This is a cluster-level state and does not inspect per-worker health.</li><li><strong>`MasterNodeReady`</strong>:  Terraform marks the creation of your cluster complete when the cluster master is in a <code>ready</code> state. Default-pool workers may still be provisioning. This is intentional.</li><li><strong>`OneWorkerNodeReady`</strong>:  Terraform marks the creation of your cluster complete when at least one default-pool worker has health state <code>normal</code>.</li><li><strong>`IngressReady`</strong>:  Terraform marks the creation of your cluster complete when the Ingress hostname is assigned. This does not inspect worker health.</li><li><strong>`AllWorkersReady`</strong>:  Use this value when you want Terraform to block until every worker in the default worker pool has health state <code>normal</code> or lifecycle state <code>deployed</code>. Additional worker pools created as separate resources are not included. The wait fails if a default-pool worker is <code>failed</code> or <code>critical</code>, or if the wait times out while a worker is still unhealthy.</li></ul> If you do not specify this option, the provider will not wait.
 - `wait_till_timeout` - ( Optional, Int ) This parameter can be used to set the `wait_till` timeout in minutes. The `wait_till_timeout` can only be used with `wait_till`. The default value is 20 minutes.
 
 ## Attribute reference
@@ -62,7 +62,7 @@ In addition to all argument reference list, you can access the following attribu
 - `vpe_service_endpoint_url` - (String) The URL of the virtual private endpoint for your cluster.
 - `status` - (String) The status of the cluster master.
 - `worker_count` - (Integer) The number of worker nodes per zone in the default worker pool. Default value ‘1’.
-- `workers` - List of objects - A list of worker nodes that belong to the cluster. 
+- `workers` - (List of String) Cluster-wide worker IDs. This list does not include health state and is not scoped to a single pool.
 - `worker_pools` - List of objects - A list of worker pools that exist in the cluster.
 
   Nested scheme for `worker_pools`:
@@ -74,6 +74,17 @@ In addition to all argument reference list, you can access the following attribu
 	- `host_pool_id` - (String) The ID of the dedicated host pool.
 	- `labels` - List of strings - A list of labels that are added to the worker pool.
 	- `operating_system` (String) The operating system of the workers in the worker pool.
+	- `workers` - List of objects - Workers in this worker pool. Use this list to inspect per-node health after apply.
+
+	  Nested scheme for `workers`:
+		- `id` - (String) The ID of the worker.
+		- `state` - (String) The health state of the worker.
+		- `pool_id` - (String) The ID of the worker pool.
+		- `pool_name` - (String) The name of the worker pool.
+		- `flavor` - (String) The flavor of the worker.
+		- `kube_version` - (String) The actual Kubernetes version of the worker.
+		- `location` - (String) The zone or location of the worker.
+		- `lifecycle_actual_state` - (String) The actual lifecycle state of the worker.
 	- `secondary_storage` - List of objects - The optional secondary storage configuration of the workers in the worker pool.
 
 	  Nested scheme for `secondary_storage`:

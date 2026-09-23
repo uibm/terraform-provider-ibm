@@ -128,6 +128,7 @@ func DataSourceIBMContainerVpcClusterWorkerPool() *schema.Resource {
 				Computed:    true,
 				Description: "Autoscaling is enabled on the workerpool",
 			},
+			"workers": vpcWorkerPoolWorkersSchema(),
 		},
 	}
 }
@@ -197,6 +198,11 @@ func dataSourceIBMContainerVpcClusterWorkerPoolRead(d *schema.ResourceData, meta
 	}
 
 	d.Set("autoscale_enabled", workerPool.AutoscaleEnabled)
+	poolWorkers, err := listVpcWorkerPoolWorkers(wpClient.Workers(), clusterName, workerPool.ID, workerPool.PoolName, targetEnv)
+	if err != nil {
+		return err
+	}
+	d.Set("workers", flattenVpcWorkerPoolWorkers(poolWorkers))
 
 	d.SetId(workerPool.ID)
 	return nil

@@ -29,6 +29,12 @@ func TestAccIBMContainerVPCClusterDataSource_basic(t *testing.T) {
 		cluster_name_id = data.ibm_container_vpc_cluster.testacc_ds_cluster.name
 	}
 	`
+	allWorkersReadyClusterScript := testAccCheckIBMContainerVpcClusterBasic(name, "MasterNodeReady") + `
+	data "ibm_container_vpc_cluster" "testacc_ds_cluster" {
+		name      = ibm_container_vpc_cluster.cluster.id
+		wait_till = "AllWorkersReady"
+	}
+	`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { acc.TestAccPreCheck(t) },
@@ -38,6 +44,8 @@ func TestAccIBMContainerVPCClusterDataSource_basic(t *testing.T) {
 				Config: masterNodeReadyClusterScript,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "id"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "workers.#"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.#"),
 					resource.TestCheckResourceAttrWith("data.ibm_container_vpc_cluster.testacc_ds_cluster", "state", func(value string) error {
 						switch value {
 						case "deploying", "deployed":
@@ -53,6 +61,15 @@ func TestAccIBMContainerVPCClusterDataSource_basic(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "id"),
 					resource.TestCheckResourceAttr("data.ibm_container_vpc_cluster.testacc_ds_cluster", "state", "normal"),
 					resource.TestCheckResourceAttrSet("data.ibm_container_cluster_config.testacc_ds_cluster", "id"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.0.workers.#"),
+				),
+			},
+			{
+				Config: allWorkersReadyClusterScript,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "id"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.0.workers.0.id"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.0.workers.0.state"),
 				),
 			},
 		},
@@ -106,6 +123,8 @@ func TestAccIBMContainerVPCClusterDataSourceEnvvar(t *testing.T) {
 			"data.ibm_container_vpc_cluster.testacc_ds_cluster", "id"),
 		resource.TestCheckResourceAttr(
 			"data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.#", "1"),
+		resource.TestCheckResourceAttrSet(
+			"data.ibm_container_vpc_cluster.testacc_ds_cluster", "worker_pools.0.workers.#"),
 	}
 	if acc.WorkerPoolSecondaryStorage != "" {
 		testChecks = append(testChecks, resource.TestCheckResourceAttr(

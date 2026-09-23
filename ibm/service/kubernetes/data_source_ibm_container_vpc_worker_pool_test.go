@@ -59,6 +59,7 @@ func TestAccIBMContainerVpcClusterWorkerPoolDataSourceBasic(t *testing.T) {
 				Config: testAccCheckIBMContainerVPCClusterWorkerPoolDataSourceConfig(name),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster_worker_pool.testacc_ds_worker_pool", "id"),
+					resource.TestCheckResourceAttrSet("data.ibm_container_vpc_cluster_worker_pool.testacc_ds_worker_pool", "workers.#"),
 				),
 			},
 		},

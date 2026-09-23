@@ -84,6 +84,12 @@ func TestAccIBMContainerVpcClusterWorkerPoolResourceBasic(t *testing.T) {
 						"ibm_container_vpc_worker_pool.default_pool", "labels.%", "0"),
 					resource.TestCheckResourceAttr(
 						"ibm_container_vpc_worker_pool.default_pool", "worker_count", "1"),
+					resource.TestCheckResourceAttrSet(
+						"ibm_container_vpc_worker_pool.test_pool", "workers.#"),
+					resource.TestCheckResourceAttrSet(
+						"ibm_container_vpc_worker_pool.test_pool", "workers.0.id"),
+					resource.TestCheckResourceAttrSet(
+						"ibm_container_vpc_worker_pool.test_pool", "workers.0.state"),
 				),
 			},
 			{

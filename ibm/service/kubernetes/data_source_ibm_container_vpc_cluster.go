@@ -44,8 +44,8 @@ func DataSourceIBMContainerVPCCluster() *schema.Resource {
 			"wait_till": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{masterNodeReady, oneWorkerNodeReady, ingressReady, clusterNormal}, true),
-				Description:  "wait_till can be configured for Master Ready, One worker Ready, Ingress Ready or Normal",
+				ValidateFunc: validation.StringInSlice(vpcClusterWaitTillValues(), true),
+				Description:  "wait_till can be configured for Master Ready, One worker Ready, Ingress Ready, Normal, or All Workers Ready",
 			},
 			"wait_till_timeout": {
 				Type:         schema.TypeInt,
@@ -139,6 +139,7 @@ func DataSourceIBMContainerVPCCluster() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"workers": vpcWorkerPoolWorkersSchema(),
 						"zones": {
 							Type:     schema.TypeList,
 							Computed: true,
@@ -470,7 +471,7 @@ func dataSourceIBMContainerClusterVPCRead(d *schema.ResourceData, meta interface
 		return fmt.Errorf("[ERROR] Error retrieving worker pools for container vpc cluster: %s", err)
 	}
 
-	d.Set("worker_pools", flex.FlattenVpcWorkerPools(pools))
+	d.Set("worker_pools", nestVpcWorkerPoolWorkers(flex.FlattenVpcWorkerPools(pools), workerFields))
 
 	if !strings.HasSuffix(cls.MasterKubeVersion, _OPENSHIFT) {
 		albs, err := csClient.Albs().ListClusterAlbs(clusterNameOrID, targetEnv)

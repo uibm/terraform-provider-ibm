@@ -48,6 +48,8 @@ func TestAccIBMContainerVpcClusterBasic(t *testing.T) {
 						"ibm_container_vpc_cluster.cluster", "worker_labels.%", "3"),
 					resource.TestCheckResourceAttr(
 						"ibm_container_vpc_cluster.cluster", "kms_config.#", "1"),
+					resource.TestCheckResourceAttr(
+						"ibm_container_vpc_cluster.cluster", "wait_till", "OneWorkerNodeReady"),
 				),
 			},
 			{
@@ -62,6 +64,40 @@ func TestAccIBMContainerVpcClusterBasic(t *testing.T) {
 						"ibm_container_vpc_cluster.cluster", "flavor", "cx2.2x4"),
 					resource.TestCheckResourceAttr(
 						"ibm_container_vpc_cluster.cluster", "kms_config.#", "1"),
+				),
+			},
+			{
+				ResourceName:      "ibm_container_vpc_cluster.cluster",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"wait_till", "update_all_workers", "kms_config", "force_delete_storage", "wait_for_worker_update",
+					"disable_outbound_traffic_protection", "flavor", "worker_count", "worker_labels", "zones",
+				},
+			},
+		},
+	})
+}
+
+func TestAccIBMContainerVpcClusterAllWorkersReady(t *testing.T) {
+	name := fmt.Sprintf("tf-vpc-cluster-%d", acctest.RandIntRange(10, 100))
+	var conf *v2.ClusterInfo
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { acc.TestAccPreCheck(t) },
+		Providers:    acc.TestAccProviders,
+		CheckDestroy: testAccCheckIBMContainerVpcClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckIBMContainerVpcClusterBasic(name, "AllWorkersReady"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIBMContainerVpcClusterExists("ibm_container_vpc_cluster.cluster", conf),
+					resource.TestCheckResourceAttr(
+						"ibm_container_vpc_cluster.cluster", "name", name),
+					resource.TestCheckResourceAttr(
+						"ibm_container_vpc_cluster.cluster", "wait_till", "AllWorkersReady"),
+					resource.TestCheckResourceAttr(
+						"ibm_container_vpc_cluster.cluster", "worker_count", "1"),
 				),
 			},
 			{

@@ -54,3 +54,14 @@ In addition to all argument reference list, you can access the following attribu
 	- `subnet-id` - (String) The worker pool subnet to assign the cluster.
 	- `subnet-name` - (String) Name of the zone.
 - `autoscale_enabled` - (Bool) Autoscaling is enabled on the workerpool
+- `workers` - List of objects - Workers that currently belong to this worker pool. Deleted workers are not included. Use this list to inspect per-node health after apply.
+
+  Nested scheme for `workers`:
+  - `id` - (String) The ID of the worker.
+  - `state` - (String) The health state of the worker.
+  - `pool_id` - (String) The ID of the worker pool.
+  - `pool_name` - (String) The name of the worker pool.
+  - `flavor` - (String) The flavor of the worker.
+  - `kube_version` - (String) The actual Kubernetes version of the worker.
+  - `location` - (String) The zone or location of the worker.
+  - `lifecycle_actual_state` - (String) The actual lifecycle state of the worker.

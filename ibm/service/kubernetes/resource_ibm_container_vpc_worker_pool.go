@@ -225,6 +225,8 @@ func ResourceIBMContainerVpcWorkerPool() *schema.Resource {
 				Description: "Autoscaling is enabled on the workerpool",
 			},
 
+			"workers": vpcWorkerPoolWorkersSchema(),
+
 			"security_groups": {
 				Type:             schema.TypeSet,
 				Optional:         true,
@@ -695,6 +697,11 @@ func resourceIBMContainerVpcWorkerPoolRead(d *schema.ResourceData, meta interfac
 		}
 	}
 	d.Set("autoscale_enabled", workerPool.AutoscaleEnabled)
+	poolWorkers, err := listVpcWorkerPoolWorkers(wpClient.Workers(), cluster, workerPool.ID, workerPool.PoolName, targetEnv)
+	if err != nil {
+		return err
+	}
+	d.Set("workers", flattenVpcWorkerPoolWorkers(poolWorkers))
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
