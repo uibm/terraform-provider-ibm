@@ -513,6 +513,7 @@ func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Res
 		registry.NewCrQuotaResource,
 		resourcecontroller.NewResourceInstanceParametersResource,
 		watsonx.NewStorageDelegationResource,
+		watsonx.NewProjectResource,
 	}
 }
 
