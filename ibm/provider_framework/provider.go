@@ -507,7 +507,9 @@ func (p *frameworkProvider) Configure(ctx context.Context, req provider.Configur
 // Resources defines the resources implemented in the provider.
 // Initially empty - all resources remain in SDKv2 provider.
 func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		registry.NewCrQuotaResource,
+	}
 }
 
 // DataSources defines the data sources implemented in the provider.
