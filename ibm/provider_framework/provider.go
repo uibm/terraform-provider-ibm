@@ -13,6 +13,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/iamidentity"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kubernetes"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/registry"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/resourcecontroller"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -509,6 +510,7 @@ func (p *frameworkProvider) Configure(ctx context.Context, req provider.Configur
 func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		registry.NewCrQuotaResource,
+		resourcecontroller.NewResourceInstanceParametersResource,
 	}
 }
 
