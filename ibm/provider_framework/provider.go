@@ -10,9 +10,11 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/codeengine"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/iamidentity"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kubernetes"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -21,7 +23,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ provider.Provider = &frameworkProvider{}
+	_ provider.Provider                       = &frameworkProvider{}
+	_ provider.ProviderWithActions            = &frameworkProvider{}
+	_ provider.ProviderWithEphemeralResources = &frameworkProvider{}
 )
 
 // frameworkProvider is the provider implementation for the IBM Cloud Terraform Provider
@@ -496,6 +500,7 @@ func (p *frameworkProvider) Configure(ctx context.Context, req provider.Configur
 	resp.DataSourceData = session
 	resp.ResourceData = session
 	resp.ActionData = session
+	resp.EphemeralResourceData = session
 }
 
 // Resources defines the resources implemented in the provider.
@@ -515,5 +520,12 @@ func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action 
 	return []func() action.Action{
 		codeengine.NewCodeEngineBuildRunAction,
 		kubernetes.NewContainerVpcBareMetalWorkerReloadAction,
+	}
+}
+
+// EphemeralResources defines the ephemeral resources implemented in the provider.
+func (p *frameworkProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
+	return []func() ephemeral.EphemeralResource{
+		iamidentity.NewIAMAuthTokenEphemeralResource,
 	}
 }
