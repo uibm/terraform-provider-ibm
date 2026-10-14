@@ -12,6 +12,7 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/codeengine"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/iamidentity"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/kubernetes"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/service/registry"
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -520,6 +521,7 @@ func (p *frameworkProvider) Actions(ctx context.Context) []func() action.Action 
 	return []func() action.Action{
 		codeengine.NewCodeEngineBuildRunAction,
 		kubernetes.NewContainerVpcBareMetalWorkerReloadAction,
+		registry.NewCrPlanUpgradeAction,
 	}
 }
 
