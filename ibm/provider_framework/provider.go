@@ -520,7 +520,9 @@ func (p *frameworkProvider) Resources(ctx context.Context) []func() resource.Res
 // DataSources defines the data sources implemented in the provider.
 // Initially empty - all data sources remain in SDKv2 provider.
 func (p *frameworkProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		watsonx.NewProjectDataSource,
+	}
 }
 
 // Actions defines the actions implemented in the provider.
