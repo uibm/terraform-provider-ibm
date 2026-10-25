@@ -87,6 +87,40 @@ func TestAccIBMIamAPIKeyAllArgs(t *testing.T) {
 	})
 }
 
+// Creates an API key for another user in the account (IBM_IAMUSER, an email),
+// looked up with the ibm_iam_user_profile data source.
+func TestAccIBMIamAPIKeyForOtherUser(t *testing.T) {
+	if acc.IAMUser == "" {
+		t.Skip("IBM_IAMUSER must be set to the email of another user in the account")
+	}
+	var conf iamidentityv1.APIKey
+	name := fmt.Sprintf("tf_user_key_%d", acctest.RandIntRange(10, 1000))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { acc.TestAccPreCheck(t) },
+		Providers:    acc.TestAccProviders,
+		CheckDestroy: testAccCheckIBMIamAPIKeyDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					data "ibm_iam_user_profile" "user" {
+						iam_id = "%s"
+					}
+					resource "ibm_iam_api_key" "user_key" {
+						name   = "%s"
+						iam_id = data.ibm_iam_user_profile.user.ibm_id
+					}
+				`, acc.IAMUser, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckIBMIamAPIKeyExists("ibm_iam_api_key.user_key", conf),
+					resource.TestCheckResourceAttrPair("ibm_iam_api_key.user_key", "iam_id", "data.ibm_iam_user_profile.user", "ibm_id"),
+					resource.TestCheckResourceAttrSet("ibm_iam_api_key.user_key", "apikey"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckIBMIamAPIKeyConfigBasic(name string) string {
 	return fmt.Sprintf(`
 		resource "ibm_iam_api_key" "iam_api_key_instance" {
