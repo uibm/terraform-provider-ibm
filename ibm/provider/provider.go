@@ -1907,7 +1907,8 @@ func Provider() *schema.Provider {
 			"ibm_logs_log_data_retention_tags": logs.AddLogsInstanceFields(logs.ResourceIbmLogsLogDataRetentionTags()),
 
 			// Logs Router Service v1
-			"ibm_logs_router_tenant": logsrouting.ResourceIBMLogsRouterTenant(),
+			"ibm_logs_router_tenant":         logsrouting.ResourceIBMLogsRouterTenant(),
+			"ibm_logs_router_service_tenant": logsrouting.ResourceIBMLogsRouterServiceTenant(),
 
 			// Logs Router Service v3
 			"ibm_logs_router_target":   logsrouter.ResourceIBMLogsRouterTarget(),
@@ -2445,7 +2446,8 @@ func Validator() validate.ValidatorDict {
 				"ibm_logs_log_data_retention_tags": logs.ResourceIbmLogsLogDataRetentionTagsValidator(),
 
 				// Added for Logs Router Service v1
-				"ibm_logs_router_tenant": logsrouting.ResourceIBMLogsRouterTenantValidator(),
+				"ibm_logs_router_tenant":         logsrouting.ResourceIBMLogsRouterTenantValidator(),
+				"ibm_logs_router_service_tenant": logsrouting.ResourceIBMLogsRouterServiceTenantValidator(),
 
 				// Added for Logs Router Service v3
 				"ibm_logs_router_target":   logsrouter.ResourceIBMLogsRouterTargetValidator(),
