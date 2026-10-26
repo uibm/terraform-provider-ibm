@@ -60,10 +60,8 @@ func ResourceIBMIamAPIKey() *schema.Resource {
 			},
 			"account_id": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
-				Description: "ID of the account that this API key authenticates for. Defaults to the caller's account.",
+				Description: "ID of the account that this API key authenticates for.",
 			},
 			"apikey": &schema.Schema{
 				Type:        schema.TypeString,
@@ -138,12 +136,9 @@ func resourceIBMIamAPIKeyCreate(context context.Context, d *schema.ResourceData,
 	}
 	iamID := userDetails.UserID
 	accountID := userDetails.UserAccount
-	// Create the key for another user or account when one is configured.
+	// Create the key for another user when one is configured.
 	if v, ok := d.GetOk("iam_id"); ok {
 		iamID = v.(string)
-	}
-	if v, ok := d.GetOk("account_id"); ok {
-		accountID = v.(string)
 	}
 
 	createAPIKeyOptions.SetName(d.Get("name").(string))

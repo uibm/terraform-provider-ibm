@@ -37,7 +37,7 @@ resource "ibm_iam_api_key" "user_key" {
 
 You can specify the following arguments for this resource.
 
-* `account_id` - (Optional, Forces new resource, String) ID of the account that this API key authenticates for. Defaults to the caller's account.
+* `account_id` - (Optional, String) ID of the account that this API key authenticates for.
 * `apikey` - (Optional, String) The API key value. This property only contains the API key value for the following cases: create an API key, update a service ID API key that stores the API key value as retrievable, or get a service ID API key that stores the API key value as retrievable. All other operations don't return the API key value, for example all user API key related operations, except for create, don't contain the API key value.
 * `description` - (Optional, String) The optional description of the API key. The 'description' property is only available if a description was provided during a create of an API key.
 * `entity_lock` - (Optional, String) Indicates if the API key is locked for further write operations. False by default.
