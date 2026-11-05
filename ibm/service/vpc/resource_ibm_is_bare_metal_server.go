@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -2788,6 +2789,7 @@ func bareMetalServerGet(context context.Context, d *schema.ResourceData, meta in
 				networkAttachments = append(networkAttachments, networkAttachmentsItemMap)
 			}
 		}
+		networkAttachments = orderBareMetalServerNetworkAttachments(networkAttachments, d.Get("network_attachments"))
 		if err = d.Set("network_attachments", networkAttachments); err != nil {
 			err = fmt.Errorf("Error setting network_attachments: %s", err)
 			return flex.DiscriminatedTerraformErrorf(err, err.Error(), "ibm_is_bare_metal_server", "read", "set-network_attachments").GetDiag()
@@ -5250,6 +5252,58 @@ func resourceIBMIsBareMetalServerMapToBareMetalServerNetworkAttachmentPrototypeB
 	}
 	model.InterfaceType = core.StringPtr("pci")
 	return model, nil
+}
+
+// orderBareMetalServerNetworkAttachments puts the attachments read from the
+// API into a stable order before they go into state. The API does not keep
+// the order the attachments were created in and changes it between calls;
+// network_attachments is a list, so a different order would show every row
+// as changed on each plan.
+//
+// Attachments whose name is already in state keep the position they have
+// there, which is the order the configuration declares them in. Attachments
+// that state does not know (created outside Terraform, or an import) follow,
+// sorted by name.
+func orderBareMetalServerNetworkAttachments(fetched []map[string]interface{}, prior interface{}) []map[string]interface{} {
+	position := map[string]int{}
+	if priorList, ok := prior.([]interface{}); ok {
+		for i, item := range priorList {
+			if m, ok := item.(map[string]interface{}); ok {
+				if name, ok := m["name"].(string); ok && name != "" {
+					if _, seen := position[name]; !seen {
+						position[name] = i
+					}
+				}
+			}
+		}
+	}
+	nameOf := func(m map[string]interface{}) string {
+		switch v := m["name"].(type) {
+		case string:
+			return v
+		case *string:
+			if v != nil {
+				return *v
+			}
+		}
+		return ""
+	}
+	ordered := make([]map[string]interface{}, len(fetched))
+	copy(ordered, fetched)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		nameI, nameJ := nameOf(ordered[i]), nameOf(ordered[j])
+		posI, knownI := position[nameI]
+		posJ, knownJ := position[nameJ]
+		switch {
+		case knownI && knownJ:
+			return posI < posJ
+		case knownI != knownJ:
+			return knownI
+		default:
+			return nameI < nameJ
+		}
+	})
+	return ordered
 }
 
 func findNetworkAttachmentDifferences(oldList, newList []interface{}, bareMetalServerId string, sess *vpcv1.VpcV1, d *schema.ResourceData) ([]vpcv1.DeleteBareMetalServerNetworkAttachmentOptions, []vpcv1.CreateBareMetalServerNetworkAttachmentOptions, bool, error) {
